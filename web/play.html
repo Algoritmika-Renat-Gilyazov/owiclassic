@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>OWI</title>
+    <script src="play.js"></script>
+    <style>
+        body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #222;
+    font-family: Arial, sans-serif;
+    color: #eee;
+}
+
+#container {
+    width: 500px;
+    height: 500px;
+    background-color: #000;
+    border: 2px solid #fff;
+    position: relative;
+    overflow: hidden;
+}
+
+#player {
+    width: 20px;
+    height: 20px;
+    background-color: red;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: top 0.05s linear, left 0.05s linear;
+}
+
+.dot {
+    width: 15px;
+    height: 15px;
+    background-color: yellow;
+    position: absolute;
+    border-radius: 50%;
+}
+
+#info {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.key-highlight {
+    background-color: #555;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+#restart-button {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background-color 0.3s ease;
+}
+
+#restart-button:hover {
+    background-color: #45a049;
+}
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="player"></div>
+    </div>
+
+    <div id="info">
+        <p>Use keys <span class="key-highlight">W</span> (Up), <span class="key-highlight">A</span>
+            (Left), <span class="key-highlight">S</span> (Down), <span class="key-highlight">D</span> (Right)
+            for move.</p>
+        <p>Don't touch edges and yellow points.</p>
+        <p>Score: <span id="score">0</span></p>
+        <button id="restart-button" style="display: none;">Restart</button>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Settings</title>
+        <script src="settings.js"></script>
+        <style>
+            body {
+                background-color: blue;
+                margin: 5px;
+                color: white;
+            }
+            #content {
+                border: 2px solid gray;
+            }
+            h1, h2 {
+                text-align: center;
+            }
+            td {
+                width: 50%;
+            }
+            input[type="text"] {
+                background-color: blue;
+                border: 2px solid white;
+            }
+            input[type="text"]:focus {
+                border-color: gray;
+                outline: none;
+                background-color: white;
+                color: black;
+            }
+            tr {
+                width: 100%;
+               
+               height: 50%;
+            }
+            .but {
+                background-color: cadetblue;
+                border: 2px solid black;
+                text-decoration: none;
+                color: white;
+            }
+            .but:hover {
+                border-color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Settings</h1>
+        <section id="content">
+            <table>
+                <tr>
+                    <td id="controls">
+                        <iframe src="controlmapper.html" width="100%" height="100%"></iframe>
+                    </td>
+                </tr>
+            </table>
+            <a class="but" href="index.html">Exit(Unsaved changes will be missed!)</a>
+        </section>
+    </body>
+</html>

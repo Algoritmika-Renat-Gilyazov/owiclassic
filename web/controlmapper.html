@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Control Mapper</title>
+    <style>
+        body {
+            background-color: blue;
+            color: white;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 0;
+            padding: 32px;
+            box-sizing: border-box;
+        }
+        .container {
+            text-align: center;
+        }
+        .key-display {
+            display: inline-block;
+            background-color: darkslategrey;
+        }
+        button {
+            background-color: cadetblue;
+            border: 2px solid black;
+        }
+        button:hover {
+            border-color: white;
+        }
+        .waiting-for-key {
+            animation: pulse 1s infinite alternate; /* Мигание */
+        }
+        @keyframes pulse {
+            from { opacity: 1; }
+            to { opacity: 0.7; }
+        }
+        .message {
+            border: 3px solid white;
+            background-color: black;
+            color: lightyellow;
+            min-height: 32px;
+            min-width: 100%;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+                const keybindsTableBody = document.querySelector('#keybindsTable tbody');
+                const resetButton = document.getElementById('resetButton');
+                const saveButton = document.getElementById('saveButton');
+                const up = document.getElementById('up');
+                const down = document.getElementById('down');
+                const left = document.getElementById('left');
+                const right = document.getElementById('right');
+                const statusMessage = document.getElementById('statusMessage');
+
+                const defaultKeybinds = {
+                    'up': 'w',
+                    'down': 's',
+                    'left': 'a',
+                    'right': 'd'
+                };
+
+                let currentKeybinds = {};
+                let isWaitingForKey = false;
+                let activeKeybindId = null;
+
+                const localStorageKey = 'controls';
+
+                function loadKeybinds() {
+                    const savedKeybinds = localStorage.getItem(localStorageKey);
+                    if (savedKeybinds) {
+                        try {
+                            currentKeybinds = JSON.parse(savedKeybinds);
+                        } catch (e) {
+                            console.error("Cannot read LoaclStorage:", e);
+                            currentKeybinds = { ...defaultKeybinds };
+                            displayMessage("Using default values", 'error');
+                        }
+                    } else {
+                        currentKeybinds = { ...defaultKeybinds };
+                        console.log("Not found. Using default.");
+                    }
+                    renderKeybinds();
+                }
+
+                function saveKeybinds() {
+                    localStorage.setItem(localStorageKey, JSON.stringify(currentKeybinds));
+                    displayMessage("Binds saved!", 'success');
+                }
+
+                function resetKeybinds() {
+                    currentKeybinds = { ...defaultKeybinds };
+                    saveKeybinds();
+                    renderKeybinds();
+                }
+
+                function renderKeybinds() {
+                    keybindsTableBody.innerHTML = '';
+                    for (const action in currentKeybinds) {
+                        const row = keybindsTableBody.insertRow();
+                        row.dataset.action = action;
+
+                        const actionCell = row.insertCell();
+                        actionCell.textContent = formatActionName(action);
+
+                        const keyCell = row.insertCell();
+                        const keyDisplay = document.createElement('span');
+                        keyDisplay.classList.add('key-display');
+                        keyDisplay.textContent = formatKeyCode(currentKeybinds[action]);
+                        keyCell.appendChild(keyDisplay);
+
+                        const changeButtonCell = row.insertCell();
+                        const changeButton = document.createElement('button');
+                        changeButton.classList.add('change-key-button');
+                        changeButton.textContent = 'Change';
+                        changeButton.dataset.action = action;
+                        changeButtonCell.appendChild(changeButton);
+                    }
+                    attachChangeButtonListeners();
+                }
+
+                function formatActionName(action) {
+                    return action
+                        .replace(/_/g, ' ');
+                        action.replace(/\b\w/g, char => char.toUpperCase());
+                }
+
+                function formatKeyCode(keyCode) {
+                    if (keyCode.startsWith('Key')) {
+                        return keyCode.substring(3); // Удаляем 'Key'
+                    }
+                    switch (keyCode) {
+                        case 'Space': return 'Space';
+                        case 'Escape': return 'Esc';
+                        case 'ControlLeft': return 'LCTRL';
+                        case 'ControlRight': return 'RCTRL';
+                        case 'ShiftLeft': return 'LSHIFT';
+                        case 'ShiftRight': return 'RSHIFT';
+                        case 'AltLeft': return 'LALT';
+                        case 'AltRight': return 'RALT';
+                        case 'ArrowUp': return 'Up Arrow';
+                        case 'ArrowDown': return 'Down Arrow';
+                        case 'ArrowLeft': return 'Left Arrow';
+                        case 'ArrowRight': return 'Right Arrow';
+                        default: return keyCode;
+                    }
+                }
+
+                function displayMessage(msg, type = 'info') {
+                    statusMessage.textContent = msg;
+                    statusMessage.className = `message ${type}`;
+                    clearTimeout(statusMessage.hideTimeout);
+                    statusMessage.hideTimeout = setTimeout(() => {
+                        statusMessage.textContent = '';
+                        statusMessage.className = 'message';
+                    }, 3000);
+                }
+
+                function attachChangeButtonListeners() {
+                    document.querySelectorAll('.change-key-button').forEach(button => {
+                        button.onclick = (event) => {
+                            if (isWaitingForKey) {
+                                displayMessage("Key already expecting!", 'warning');
+                                return;
+                            }
+
+                            document.querySelectorAll('.change-key-button').forEach(btn => btn.classList.remove('waiting-for-key'));
+
+                            isWaitingForKey = true;
+                            activeKeybindId = event.target.dataset.action;
+                            event.target.classList.add('waiting-for-key');
+                            event.target.textContent = 'Press key';
+                            displayMessage(`Press new key for "${formatActionName(activeKeybindId)}"`, 'info');
+
+                            document.querySelectorAll('.change-key-button').forEach(btn => {
+                                if (btn !== event.target) {
+                                    btn.disabled = true;
+                                }
+                            });
+
+                            document.removeEventListener('keydown', handleNewKeyInput);
+                            document.addEventListener('keydown', handleNewKeyInput, { once: true });
+                        };
+                    });
+                }
+
+                function handleNewKeyInput(event) {
+                    event.preventDefault();
+
+                    if (!isWaitingForKey || !activeKeybindId) {
+                        return;
+                    }
+
+                    const newKeyCode = event.code;
+                    const existingAction = Object.keys(currentKeybinds).find(
+                        action => currentKeybinds[action] === newKeyCode && action !== activeKeybindId
+                    );
+
+                    if (existingAction) {
+                        displayMessage(`Key "${formatKeyCode(newKeyCode)}" already binded to action "${formatActionName(existingAction)}".`, 'error');
+                        // Восстанавливаем состояние кнопки
+                        const currentButton = document.querySelector(`button[data-action="${activeKeybindId}"]`);
+                        if (currentButton) {
+                            currentButton.classList.remove('waiting-for-key');
+                            currentButton.textContent = 'Change';
+                        }
+                    } else {
+                        currentKeybinds[activeKeybindId] = newKeyCode;
+                        renderKeybinds();
+                        displayMessage(`Bind "${formatActionName(activeKeybindId)}" successfully changed to "${formatKeyCode(newKeyCode)}".`, 'success');
+                    }
+
+                    isWaitingForKey = false;
+                    activeKeybindId = null;
+
+                    document.querySelectorAll('.change-key-button').forEach(btn => btn.disabled = false);
+                }
+
+                loadKeybinds();
+            });
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Control Mapper</h1>
+
+        <table id="keybindsTable">
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Key</th>
+                    <th>Change</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <div class="controls">
+            <button id="resetButton">Reset Default</button>
+            <button id="saveButton">Save</button>
+        </div>
+
+        <p id="statusMessage" class="message"></p>
+    </div>
+</body>
+
+</html>
